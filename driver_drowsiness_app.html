@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  :root {
+    --bg: #07090f;
+    --surface: #0e1220;
+    --surface2: #131826;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #dde3f5;
+    --text2: #7a859e;
+    --text3: #44506a;
+    --accent: #5d9cf5;
+    --green: #3fc98a;
+    --amber: #f5a623;
+    --red: #f05454;
+    --font: 'Rajdhani', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; overflow: hidden; -webkit-font-smoothing: antialiased; }
+  html, body, .app { height: 100%; }
+
+  .app { display: flex; flex-direction: column; height: 100dvh; }
+  .nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 20px;
+    background: rgba(7,9,15,0.97);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .nav-logo { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--accent); letter-spacing: 0.04em; }
+  .nav-logo svg { width: 20px; height: 20px; flex-shrink: 0; }
+  .nav-status { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text2); font-family: var(--mono); }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+  .status-dot.active { animation: pulse-dot 2s ease-in-out infinite; }
+  .status-dot.paused { background: var(--amber); animation: none; }
+  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.45;transform:scale(0.85)} }
+  .page { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+  .page.active { display: flex; }
+  .home-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
+  .home-scroll::-webkit-scrollbar { width: 0; }
+
+  .home-hero { padding: 28px 20px 18px; }
+  .home-greeting { font-size: 11px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 4px; font-family: var(--mono); }
+  .home-title { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1.2; letter-spacing: 0.01em; }
+  .home-subtitle { font-size: 13px; color: var(--text2); margin-top: 3px; }
+
+  .alert-banner {
+    margin: 0 20px 16px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid;
+    display: flex; align-items: center; gap: 12px;
+    will-change: transform;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .alert-banner.safe { background: rgba(63,201,138,0.08); border-color: rgba(63,201,138,0.25); }
+  .alert-banner.warning { background: rgba(245,166,35,0.08); border-color: rgba(245,166,35,0.28); }
+  .alert-banner.danger { background: rgba(240,84,84,0.1); border-color: rgba(240,84,84,0.32); }
+  .alert-icon { font-size: 22px; flex-shrink: 0; }
+  .alert-text strong { display: block; font-size: 14px; font-weight: 600; letter-spacing: 0.02em; }
+  .alert-text span { font-size: 12px; opacity: 0.65; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 20px 16px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 12px; }
+  .stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; font-family: var(--mono); }
+  .stat-value { font-size: 21px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+  .stat-unit { font-size: 11px; color: var(--text2); font-weight: 400; margin-left: 2px; }
+  .stat-bar { height: 2px; background: var(--surface2); border-radius: 1px; margin-top: 8px; overflow: hidden; }
+  .stat-fill { height: 100%; border-radius: 1px; transition: width 0.6s ease, background 0.4s ease; }
+
+  .section-label { padding: 0 20px 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); font-weight: 600; font-family: var(--mono); }
+
+  .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px 24px; }
+  .qa-btn {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 13px;
+    cursor: pointer; text-align: left;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    display: flex; flex-direction: column; gap: 6px;
+    will-change: transform;
+  }
+  .qa-btn:hover { border-color: rgba(93,156,245,0.3); background: var(--surface2); }
+  .qa-btn:active { transform: scale(0.97); }
+  .qa-icon { font-size: 20px; line-height: 1; }
+  .qa-title { font-size: 13px; font-weight: 600; color: #c4cde8; letter-spacing: 0.02em; }
+  .qa-desc { font-size: 11px; color: var(--text3); }
+  .qa-btn.full { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 12px; }
+  .qa-btn.full .qa-icon { font-size: 24px; }
+  .map-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+  .map-search-bar { display: flex; gap: 8px; padding: 10px 14px 6px; flex-shrink: 0; }
+  .search-wrap { flex: 1; position: relative; }
+  .search-input {
+    width: 100%; background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 10px; padding: 9px 36px 9px 13px; color: var(--text); font-size: 14px;
+    font-family: var(--font); outline: none; transition: border-color 0.2s; box-sizing: border-box;
+  }
+  .search-input:focus { border-color: rgba(93,156,245,0.45); }
+  .search-input::placeholder { color: var(--text3); }
+  .search-clear {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--text3); font-size: 16px;
+    cursor: pointer; padding: 0; display: none; line-height: 1;
+  }
+  .search-btn {
+    background: #163264; border: 1px solid rgba(93,156,245,0.3);
+    border-radius: 10px; padding: 9px 16px; color: var(--accent);
+    cursor: pointer; font-size: 14px; font-weight: 600; font-family: var(--font);
+    transition: background 0.15s; white-space: nowrap; flex-shrink: 0;
+  }
+  .search-btn:hover { background: #1a3d78; }
+  .search-btn:active { transform: scale(0.96); }
+  .quick-dest { display: flex; gap: 7px; padding: 0 14px 8px; overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
+  .quick-dest::-webkit-scrollbar { display: none; }
+  .dest-chip {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 5px 13px; font-size: 12px; font-weight: 600;
+    color: var(--text2); cursor: pointer; white-space: nowrap;
+    transition: all 0.15s; font-family: var(--font); flex-shrink: 0;
+  }
+  .dest-chip:hover  { border-color: rgba(93,156,245,0.4); color: var(--accent); }
+  .dest-chip.active { background: rgba(93,156,245,0.12); border-color: rgba(93,156,245,0.5); color: var(--accent); }
+  .trip-info-bar { display: flex; gap: 8px; padding: 0 14px 8px; flex-shrink: 0; }
+  .trip-stat { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; text-align: center; }
+  .trip-stat-val { font-size: 15px; font-weight: 700; color: var(--text); }
+  .trip-stat-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; font-family: var(--mono); margin-top: 1px; }
+  .map-visual {
+    flex: 1; background: var(--surface); border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border); overflow: hidden; min-height: 0; position: relative;
+  }
+  .map-visual iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .map-loading-overlay {
+    position: absolute; inset: 0; background: var(--surface);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; z-index: 10; transition: opacity 0.4s ease;
+  }
+  .map-loading-overlay.hidden { opacity: 0; pointer-events: none; }
+  .map-loading-overlay .pin { font-size: 30px; animation: bounce-pin 1.4s ease-in-out infinite; }
+  @keyframes bounce-pin { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .map-loading-overlay p { font-size: 13px; color: var(--accent); font-weight: 600; letter-spacing: 0.04em; }
+  .map-loading-overlay small { font-size: 11px; color: var(--text2); }
+  .map-drowsy-warn {
+    display: none; position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    background: rgba(240,84,84,0.93); color: #fff; border-radius: 10px;
+    padding: 7px 16px; font-size: 12px; font-weight: 700; z-index: 20;
+    white-space: nowrap; backdrop-filter: blur(6px);
+    animation: warn-pulse 1s ease-in-out infinite;
+  }
+  @keyframes warn-pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+  .map-drowsy-warn.show { display: block; }
+  .map-bottom { flex-shrink: 0; max-height: 220px; overflow-y: auto; padding: 8px 14px 10px; }
+  .map-bottom::-webkit-scrollbar { width: 3px; }
+  .map-bottom::-webkit-scrollbar-thumb { background: #1e2d48; border-radius: 2px; }
+  .loc-status { font-size: 11px; color: var(--text2); display: flex; align-items: center; gap: 6px; flex-shrink: 0; font-family: var(--mono); padding: 0 14px 6px; }
+  #locDot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); display: inline-block; flex-shrink: 0; transition: background 0.3s; }
+  .map-section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); font-weight: 600; font-family: var(--mono); margin-bottom: 6px; margin-top: 4px; }
+  .route-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+  .route-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 9px 11px; display: flex; align-items: center;
+    gap: 9px; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  }
+  .route-item:hover  { border-color: rgba(93,156,245,0.3); }
+  .route-item.selected { border-color: rgba(93,156,245,0.5); background: var(--surface2); }
+  .route-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .route-info { flex: 1; min-width: 0; }
+  .route-name   { font-size: 12px; font-weight: 600; color: #c4cde8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .route-detail { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .route-badge  { font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 600; white-space: nowrap; font-family: var(--mono); }
+  .route-badge.fast   { background: rgba(63,201,138,0.12); color: var(--green); }
+  .route-badge.toll   { background: rgba(245,166,35,0.1);  color: var(--amber); }
+  .route-badge.scenic { background: rgba(93,156,245,0.1);  color: var(--accent); }
+  .route-badge.rest   { background: rgba(240,84,84,0.1);   color: var(--red); }
+  .rest-stops { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+  .rest-stops::-webkit-scrollbar { display: none; }
+  .rest-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 9px 12px; min-width: 120px; flex-shrink: 0; cursor: pointer; transition: border-color 0.15s;
+  }
+  .rest-card:hover { border-color: rgba(93,156,245,0.35); }
+  .rest-card:active { transform: scale(0.96); }
+  .rest-card-icon { font-size: 18px; margin-bottom: 4px; }
+  .rest-card-name { font-size: 12px; font-weight: 600; color: #c4cde8; }
+  .rest-card-dist { font-size: 11px; color: var(--accent); margin-top: 2px; font-family: var(--mono); }
+  .drowsy-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: 14px 18px 12px; display: flex; flex-direction: column; gap: 12px; }
+  .drowsy-scroll::-webkit-scrollbar { width: 3px; }
+  .drowsy-scroll::-webkit-scrollbar-track { background: transparent; }
+  .drowsy-scroll::-webkit-scrollbar-thumb { background: #1e2d48; border-radius: 2px; }
+  .camera-frame {
+    background: #050810;
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    flex-shrink: 0;
+    contain: layout paint;
+  }
+  .camera-frame img {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    will-change: transform; 
+    pointer-events: none;
+  }
+  .cam-offline {
+    display: none;
+    position: absolute; inset: 0;
+    background: #050810;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px;
+    z-index: 5;
+  }
+  .cam-offline.show { display: flex; }
+  .cam-offline-icon { font-size: 32px; opacity: 0.4; }
+  .cam-offline-text { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+  .scan-line {
+    position: absolute; height: 2px;
+    background: linear-gradient(90deg, transparent 0%, rgba(93,156,245,0.55) 50%, transparent 100%);
+    width: 100%; pointer-events: none; z-index: 3;
+    animation: scan-anim 2.8s linear infinite;
+    will-change: transform;
+  }
+  @keyframes scan-anim {
+    0%  { transform: translateY(0); opacity: 0; }
+    5%  { opacity: 1; }
+    95% { opacity: 1; }
+    100%{ transform: translateY(calc(var(--cam-h, 200px) * 0.8)); opacity: 0; }
+  }
+
+  .cam-overlay-text {
+    position: absolute; bottom: 10px; left: 10px; right: 10px;
+    display: flex; justify-content: space-between; pointer-events: none; z-index: 4;
+  }
+  .cam-badge {
+    background: rgba(7,9,15,0.82);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 4px 9px;
+    font-size: 10px; color: var(--text2); font-family: var(--mono);
+    backdrop-filter: blur(6px);
+  }
+  .cam-badge.live { color: var(--green); border-color: rgba(63,201,138,0.3); }
+  .cam-badge.stopped { color: var(--red); border-color: rgba(240,84,84,0.3); }
+
+  .alert-level { display: flex; gap: 7px; flex-shrink: 0; }
+  .level-btn {
+    flex: 1; padding: 9px 6px; border-radius: 10px; border: 1px solid;
+    cursor: pointer; font-size: 12px; font-weight: 600;
+    text-align: center; font-family: var(--font); letter-spacing: 0.04em;
+    transition: all 0.18s;
+  }
+  .level-btn.alert-safe { background: rgba(63,201,138,0.08); border-color: rgba(63,201,138,0.2); color: var(--green); }
+  .level-btn.alert-warn { background: rgba(245,166,35,0.06); border-color: rgba(245,166,35,0.18); color: var(--amber); }
+  .level-btn.alert-danger { background: rgba(240,84,84,0.06); border-color: rgba(240,84,84,0.18); color: var(--red); }
+  .level-btn.active { box-shadow: 0 0 0 2px currentColor; transform: scale(1.03); }
+
+  .event-log {
+    background: #050810; border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 12px;
+    max-height: 160px; overflow-y: auto;
+    flex-shrink: 0;
+    overscroll-behavior: contain;
+  }
+  .event-log::-webkit-scrollbar { width: 3px; }
+  .event-log::-webkit-scrollbar-track { background: transparent; }
+  .event-log::-webkit-scrollbar-thumb { background: #1e2d48; border-radius: 2px; }
+  .event-item { display: flex; align-items: flex-start; gap: 9px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .event-item:last-child { border-bottom: none; }
+  .event-time { font-size: 10px; color: var(--text3); flex-shrink: 0; font-family: var(--mono); padding-top: 1px; min-width: 36px; }
+  .event-msg-wrap { display: flex; flex-direction: column; gap: 2px; }
+  .event-msg { font-size: 12px; color: var(--text2); }
+  .event-loc { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+  .tag { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 10px; margin-left: 5px; font-family: var(--mono); font-weight: 500; }
+  .tag-ok { background: rgba(63,201,138,0.12); color: var(--green); }
+  .tag-warn { background: rgba(245,166,35,0.12); color: var(--amber); }
+  .tag-alert { background: rgba(240,84,84,0.12); color: var(--red); }
+
+  .control-row { display: flex; gap: 7px; flex-wrap: wrap; flex-shrink: 0; }
+  .ctrl-btn {
+    flex: 1; min-width: 74px; padding: 10px 6px;
+    border-radius: 10px; border: 1px solid rgba(255,255,255,0.09);
+    cursor: pointer; font-size: 12px; font-weight: 600;
+    font-family: var(--font); letter-spacing: 0.04em;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .ctrl-btn:active { transform: scale(0.96); }
+  .ctrl-btn.primary { background: #163264; color: var(--accent); border-color: rgba(93,156,245,0.3); }
+  .ctrl-btn.primary:hover { background: #1a3d78; }
+  .ctrl-btn.secondary { background: var(--surface); color: var(--text2); }
+  .ctrl-btn.secondary:hover { color: var(--text); background: var(--surface2); }
+  .ctrl-btn.danger-btn { background: rgba(240,84,84,0.08); color: var(--red); border-color: rgba(240,84,84,0.22); }
+  .ctrl-btn.danger-btn:hover { background: rgba(240,84,84,0.15); }
+  .bottom-nav { display: flex; border-top: 1px solid var(--border); background: rgba(7,9,15,0.99); flex-shrink: 0; }
+  .bnav-tab {
+    flex: 1; padding: 9px 8px 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; border: none; background: transparent;
+    transition: all 0.15s;
+  }
+  .bnav-icon { font-size: 21px; line-height: 1; }
+  .bnav-label { font-size: 10px; color: var(--text3); font-weight: 600; letter-spacing: 0.06em; font-family: var(--mono); }
+  .bnav-tab.active .bnav-label { color: var(--accent); }
+  .bnav-tab.active .bnav-icon { filter: drop-shadow(0 0 5px rgba(93,156,245,0.5)); }
+  @keyframes blink-border { 0%,100%{border-color:rgba(240,84,84,0.32)} 50%{border-color:rgba(240,84,84,0.7)} }
+  .alert-banner.danger { animation: blink-border 1s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <nav class="nav">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      Driver Drowsiness Detection
+    </div>
+    <div class="nav-status">
+      <div class="status-dot active" id="statusDot"></div>
+      <span id="statusText">Monitoring</span>
+    </div>
+  </nav>
+  <div class="page active" id="page-home">
+    <div class="home-scroll">
+      <div class="home-hero">
+        <div class="home-greeting" id="greetingLabel">Good morning, Driver</div>
+        <div class="home-title">Stay Safe on the Road</div>
+        <div class="home-subtitle">Real-time drowsiness detection active</div>
+      </div>
+      <div class="alert-banner safe" id="alertBanner">
+        <div class="alert-icon">✅</div>
+        <div class="alert-text">
+          <strong>Driver Alert — All Clear</strong>
+          <span>No drowsiness detected in the last 30 minutes</span>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Drive Time</div>
+          <div class="stat-value">
+            <span id="driveHr">0</span><span class="stat-unit">h</span>&nbsp;<span id="driveMin">0</span><span class="stat-unit">m</span>
+          </div>
+          <div class="stat-bar"><div class="stat-fill" id="timeFill" style="width:2%; background:var(--accent);"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Alertness</div>
+          <div class="stat-value" id="alertnessPct">95<span class="stat-unit">%</span></div>
+          <div class="stat-bar"><div class="stat-fill" id="alertnessFill" style="width:95%; background:var(--green);"></div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Warnings</div>
+          <div class="stat-value" id="warnCount">0</div>
+          <div class="stat-bar"><div class="stat-fill" id="warnFill" style="width:0%; background:var(--amber);"></div></div>
+        </div>
+      </div>
+
+      <div class="section-label">Quick Actions</div>
+      <div class="quick-actions">
+        <button class="qa-btn" onclick="showPage('map')">
+          <div class="qa-icon">🗺️</div>
+          <div class="qa-title">Navigate</div>
+          <div class="qa-desc">Set destination</div>
+        </button>
+        <button class="qa-btn" onclick="showPage('drowsiness')">
+          <div class="qa-icon">👁️</div>
+          <div class="qa-title">Eye Monitor</div>
+          <div class="qa-desc">Live drowsiness scan</div>
+        </button>
+        <button class="qa-btn" onclick="triggerSimAlert()">
+          <div class="qa-icon">🔔</div>
+          <div class="qa-title">Test Alert</div>
+          <div class="qa-desc">Simulate warning</div>
+        </button>
+        <button class="qa-btn" onclick="toggleMonitor()">
+          <div class="qa-icon" id="monitorIcon">⏸️</div>
+          <div class="qa-title" id="monitorTitle">Pause Monitor</div>
+          <div class="qa-desc" id="monitorDesc">Monitoring is active</div>
+        </button>
+        <button class="qa-btn full" onclick="showPage('map')">
+          <div class="qa-icon">⛽</div>
+          <div>
+            <div class="qa-title">Nearby Rest Stops</div>
+            <div class="qa-desc">Find fuel, food & rest areas along your route</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="page" id="page-map">
+    <div class="map-container">
+      <div class="map-search-bar">
+        <div class="search-wrap">
+          <input class="search-input" placeholder="🔍  Where to?" id="destInput" value="Indore"
+                 oninput="onDestInput(this)" onkeydown="if(event.key==='Enter') doSearch()" />
+          <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+        </div>
+        <button class="search-btn" onclick="doSearch()">Go</button>
+      </div>
+
+      <!-- Quick destination chips -->
+      <div class="quick-dest" id="quickDest">
+        <div class="dest-chip active" onclick="pickChip(this,'Indore')">Indore</div>
+        <div class="dest-chip" onclick="pickChip(this,'Jabalpur')">Jabalpur</div>
+        <div class="dest-chip" onclick="pickChip(this,'Gwalior')">Gwalior</div>
+        <div class="dest-chip" onclick="pickChip(this,'Ujjain')">Ujjain</div>
+        <div class="dest-chip" onclick="pickChip(this,'Nagpur')">Nagpur</div>
+        <div class="dest-chip" onclick="pickChip(this,'Delhi')">Delhi</div>
+        <div class="dest-chip" onclick="pickChip(this,'Mumbai')">Mumbai</div>
+      </div>
+
+      <!-- Trip info stats -->
+      <div class="trip-info-bar">
+        <div class="trip-stat">
+          <div class="trip-stat-val" id="tripDist">—</div>
+          <div class="trip-stat-lbl">Distance</div>
+        </div>
+        <div class="trip-stat">
+          <div class="trip-stat-val" id="tripETA">—</div>
+          <div class="trip-stat-lbl">Est. Arrival</div>
+        </div>
+        <div class="trip-stat">
+          <div class="trip-stat-val" id="tripDuration">—</div>
+          <div class="trip-stat-lbl">Duration</div>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div class="map-visual">
+        <iframe id="googleMapFrame" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <div class="map-loading-overlay" id="mapLoadingOverlay">
+          <div class="pin">📍</div>
+          <p>Getting your location…</p>
+          <small>Allow location access when prompted</small>
+        </div>
+        <div class="map-drowsy-warn" id="mapDrowsyWarn">⚠️ Eyes closing — pull over soon!</div>
+      </div>
+
+      <!-- Location + routes + rest stops -->
+      <div class="map-bottom">
+        <div class="loc-status">
+          <span id="locDot"></span>
+          <span id="locText">Fetching location…</span>
+        </div>
+
+        <div class="map-section-label" id="routeLabel">Suggested Routes → Indore</div>
+        <div class="route-list" id="routeList">
+          <!-- populated dynamically by renderRoutes() -->
+        </div>
+
+        <div class="map-section-label" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>Nearby Rest Stops &amp; Fuel</span>
+          <button onclick="loadNearbyStops(true)" style="background:none;border:none;color:var(--accent);font-size:11px;cursor:pointer;font-family:var(--mono);padding:0;">↻ Refresh</button>
+        </div>
+        <div class="rest-stops" id="restStops">
+          <!-- populated by loadNearbyStops() -->
+          <div class="rest-card-loading" id="restLoading">
+            <div style="font-size:11px;color:var(--text3);font-family:var(--mono);">📍 Getting your location…</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="page" id="page-drowsiness">
+    <div class="drowsy-scroll">
+
+      <div class="camera-frame" id="cameraFrame">
+        <img id="cameraStream" alt="Camera Feed" style="display:none;" />
+
+        <div class="cam-offline show" id="camOffline">
+          <div class="cam-offline-icon">📷</div>
+          <div class="cam-offline-text">Camera offline — press ▶ Start</div>
+        </div>
+        <div class="scan-line" id="scanLine" style="display:none;"></div>
+        <div class="cam-overlay-text">
+          <div class="cam-badge stopped" id="liveBadge">● Stopped</div>
+          <div class="cam-badge" id="detectionBadge">—</div>
+        </div>
+      </div>
+
+      <div class="alert-level">
+        <div class="level-btn alert-safe active" id="lvl-safe">😊 Alert</div>
+        <div class="level-btn alert-warn" id="lvl-warn">😴 Drowsy</div>
+        <div class="level-btn alert-danger" id="lvl-danger">🚨 Critical</div>
+      </div>
+
+      <div class="section-label" style="padding:0 0 4px;">Event Log</div>
+      <div class="event-log" id="eventLog">
+        <div class="event-item">
+          <div class="event-time">--:--</div>
+          <div class="event-msg">Session started — driver verified <span class="tag tag-ok">OK</span></div>
+        </div>
+      </div>
+
+      <div class="control-row">
+        <button class="ctrl-btn primary" onclick="simulateDrowsy()">Simulate Drowsy</button>
+        <button class="ctrl-btn secondary" onclick="resetDetection()">Reset</button>
+        <button class="ctrl-btn danger-btn" onclick="triggerAlert()">🔔 Alert</button>
+        <button class="ctrl-btn secondary" onclick="stopCamera()">🛑 Stop</button>
+        <button class="ctrl-btn primary" onclick="startCamera()">▶️ Start</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="bnav-tab active" id="btab-home" onclick="showPage('home')">
+      <div class="bnav-icon">🏠</div>
+      <div class="bnav-label">Home</div>
+    </button>
+    <button class="bnav-tab" id="btab-map" onclick="showPage('map')">
+      <div class="bnav-icon">🗺️</div>
+      <div class="bnav-label">Navigate</div>
+    </button>
+    <button class="bnav-tab" id="btab-drowsiness" onclick="showPage('drowsiness')">
+      <div class="bnav-icon">👁️</div>
+      <div class="bnav-label">Monitor</div>
+    </button>
+  </div>
+
+</div>
+
+<script>
+let audioCtx = null;
+let alarmInterval = null;
+
+function ensureAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function beep() {
+  ensureAudioCtx();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+  osc.start(audioCtx.currentTime);
+  osc.stop(audioCtx.currentTime + 0.4);
+}
+
+function startAlarm() {
+  stopAlarm();
+  beep();
+  alarmInterval = setInterval(beep, 900);
+}
+
+function stopAlarm() {
+  if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
+}
+function updateGreeting() {
+  const hr = new Date().getHours();
+  const label = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greetingLabel').textContent = label + ', Driver';
+}
+updateGreeting();
+let lastState = "";
+let monitoring = true;
+let warnCount = 0;
+let cameraActive = false;
+let startTime = Date.now();
+function updateDriveTimer() {
+  const elapsed = Math.floor((Date.now() - startTime) / 60000);
+  document.getElementById("driveHr").textContent = Math.floor(elapsed / 60);
+  document.getElementById("driveMin").textContent = elapsed % 60;
+  const pct = Math.min((elapsed / 240) * 100, 100);
+  document.getElementById("timeFill").style.width = pct + "%";
+}
+setInterval(updateDriveTimer, 60000);
+
+function updateAlertness(level) {
+  const val = level === "safe" ? 95 : level === "warn" ? 68 : 38;
+  document.getElementById("alertnessPct").innerHTML = val + '<span class="stat-unit">%</span>';
+  const bar = document.getElementById("alertnessFill");
+  bar.style.width = val + "%";
+  bar.style.background = val > 80 ? "var(--green)" : val > 55 ? "var(--amber)" : "var(--red)";
+}
+
+function updateWarnBar() {
+  const pct = Math.min((warnCount / 10) * 100, 100);
+  document.getElementById("warnFill").style.width = pct + "%";
+}
+
+function getCurrentTime() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+let _cachedLocStr = null;  
+let _cachedLocLink = null; 
+
+function _refreshLocation() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    _cachedLocStr  = `${Math.abs(lat).toFixed(4)}° ${lat>=0?'N':'S'}, ${Math.abs(lng).toFixed(4)}° ${lng>=0?'E':'W'}`;
+    _cachedLocLink = `https://maps.google.com/?q=${lat},${lng}`;
+    if (!userLat) { userLat = lat; userLng = lng; }
+  }, () => {}, { enableHighAccuracy: true, timeout: 5000 });
+}
+// Refresh location every 30 seconds so log entries stay accurate
+_refreshLocation();
+setInterval(_refreshLocation, 30000);
+
+function addLog(message, type, includeLocation) {
+  const log = document.getElementById("eventLog");
+  const tagClass = type === "OK" ? "tag-ok" : type === "WARN" ? "tag-warn" : "tag-alert";
+  const div = document.createElement("div");
+  div.className = "event-item";
+  let locHtml = "";
+  if (includeLocation) {
+    if (_cachedLocStr && _cachedLocLink) {
+      locHtml = `<div class="event-loc">📍 <a href="${_cachedLocLink}" target="_blank" style="color:var(--accent);text-decoration:none;">${_cachedLocStr}</a></div>`;
+    } else {
+      locHtml = `<div class="event-loc" style="color:var(--text3);font-size:10px;">📍 Location unavailable</div>`;
+    }
+  }
+
+  div.innerHTML = `
+    <div class="event-time">${getCurrentTime()}</div>
+    <div class="event-msg-wrap">
+      <div class="event-msg">${message} <span class="tag ${tagClass}">${type}</span></div>
+      ${locHtml}
+    </div>
+  `;
+  log.prepend(div);
+  while (log.children.length > 50) log.removeChild(log.lastChild);
+}
+
+function setDrowsyLevel(level) {
+  if (level === lastState) return;
+
+  if (level === "danger" && lastState !== "danger") {
+    startAlarm();
+    addLog("Critical drowsiness detected — pull over!", "ALERT", true);
+    showToast("🚨 DROWSINESS DETECTED — Pull over safely!", "danger");
+  } else if (level === "warn" && lastState !== "warn") {
+    stopAlarm(); 
+    addLog("Driver getting drowsy — take a break", "WARN", true);
+    loadNearbyStops(true); 
+    showToast("⚠️ Drowsiness warning — consider pulling over", "warning");
+  } else if (level === "safe") {
+    stopAlarm();
+    if (lastState && lastState !== "safe") addLog("Driver alert — normal state", "OK", false);
+  }
+  if ((level === "warn" || level === "danger") && lastState === "safe") {
+    warnCount++;
+    document.getElementById("warnCount").textContent = warnCount;
+    updateWarnBar();
+  }
+
+  lastState = level;
+  updateMapDrowsyWarn(level);
+  updateAlertness(level);
+
+  ["safe", "warn", "danger"].forEach(l =>
+    document.getElementById("lvl-" + l).classList.toggle("active", l === level)
+  );
+
+  document.getElementById("detectionBadge").textContent =
+    level === "safe" ? "Eyes Open ✓" : level === "warn" ? "Eyes Closing…" : "Eyes Closed!";
+
+  const banner = document.getElementById("alertBanner");
+  if (level === "safe") {
+    banner.className = "alert-banner safe";
+    banner.innerHTML = '<div class="alert-icon">✅</div><div class="alert-text"><strong>Driver Alert — All Clear</strong><span>No drowsiness detected</span></div>';
+  } else if (level === "warn") {
+    banner.className = "alert-banner warning";
+    banner.innerHTML = '<div class="alert-icon">⚠️</div><div class="alert-text"><strong>Drowsy Warning</strong><span>Please take a break soon</span></div>';
+  } else {
+    banner.className = "alert-banner danger";
+    banner.innerHTML = '<div class="alert-icon">🚨</div><div class="alert-text"><strong>Critical Alert!</strong><span>Wake up — pull over immediately!</span></div>';
+  }
+}
+
+function showToast(msg, type) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    Object.assign(t.style, {
+      position:'fixed', bottom:'80px', left:'50%', transform:'translateX(-50%)',
+      padding:'10px 18px', borderRadius:'10px', fontFamily:"'Rajdhani',sans-serif",
+      fontSize:'13px', fontWeight:'600', letterSpacing:'0.04em',
+      zIndex:'9999', maxWidth:'90%', textAlign:'center',
+      boxShadow:'0 4px 24px rgba(0,0,0,0.5)',
+      transition:'opacity 0.3s ease, transform 0.3s ease',
+    });
+    document.body.appendChild(t);
+  }
+  const colors = {
+    danger: { bg:'rgba(240,84,84,0.95)', color:'#fff', border:'rgba(240,84,84,0.6)' },
+    warning:{ bg:'rgba(245,166,35,0.92)', color:'#07090f', border:'rgba(245,166,35,0.5)' },
+    ok:     { bg:'rgba(63,201,138,0.92)', color:'#07090f', border:'rgba(63,201,138,0.5)' },
+  };
+  const c = colors[type] || colors.ok;
+  Object.assign(t.style, { background:c.bg, color:c.color, border:'1px solid '+c.border, opacity:'1', transform:'translateX(-50%) translateY(0)' });
+  t.textContent = msg;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(8px)'; }, 3200);
+}
+let pollFailures = 0;
+let pollTimer = null;
+
+function schedulePoll(delay) {
+  clearTimeout(pollTimer);
+  pollTimer = setTimeout(fetchStatus, delay);
+}
+
+async function fetchStatus() {
+  if (!monitoring || !cameraActive) { schedulePoll(3000); return; }
+  try {
+    const res = await fetch("http://127.0.0.1:5000/status", { signal: AbortSignal.timeout(1500) });
+    const data = await res.json();
+    setDrowsyLevel(data.state);
+    pollFailures = 0;
+    schedulePoll(2000);
+  } catch {
+    pollFailures++;
+    const backoff = Math.min(2000 * Math.pow(1.5, pollFailures), 15000);
+    schedulePoll(backoff);
+  }
+}
+schedulePoll(2000);
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.bnav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('btab-' + name).classList.add('active');
+  if (name === 'map' && !document.getElementById('googleMapFrame').src) initMap();
+}
+function triggerAlert()   { ensureAudioCtx(); setDrowsyLevel("danger"); }
+function simulateDrowsy() { ensureAudioCtx(); setDrowsyLevel("warn"); }
+function resetDetection() { setDrowsyLevel("safe"); }
+function triggerSimAlert(){ ensureAudioCtx(); setDrowsyLevel("warn"); }
+
+function toggleMonitor() {
+  monitoring = !monitoring;
+  document.getElementById("monitorIcon").textContent = monitoring ? "⏸️" : "▶️";
+  document.getElementById("monitorTitle").textContent = monitoring ? "Pause Monitor" : "Resume Monitor";
+  document.getElementById("monitorDesc").textContent = monitoring ? "Monitoring is active" : "Monitoring is paused";
+  document.getElementById("statusDot").className = "status-dot " + (monitoring ? "active" : "paused");
+  document.getElementById("statusText").textContent = monitoring ? "Monitoring" : "Paused";
+}
+function startCamera() {
+  const img = document.getElementById("cameraStream");
+  const offline = document.getElementById("camOffline");
+  const scanLine = document.getElementById("scanLine");
+  const liveBadge = document.getElementById("liveBadge");
+  if (!cameraActive) {
+    cameraActive = true; 
+    img.src = "http://127.0.0.1:5000/video_feed?" + Date.now();
+    img.style.display = "block";
+    img.onerror = () => {
+      img.style.display = "none";
+      offline.className = "cam-offline show";
+      offline.innerHTML = '<div class="cam-offline-icon">⚠️</div><div class="cam-offline-text">Backend offline — start Flask server</div>';
+      liveBadge.className = "cam-badge stopped";
+      liveBadge.textContent = "● Offline";
+      cameraActive = false;
+    };
+  }
+  monitoring = true;
+  offline.className = "cam-offline"; // hide
+  scanLine.style.display = "block";
+  liveBadge.className = "cam-badge live";
+  liveBadge.textContent = "● Live";
+  addLog("Camera started", "OK", false);
+
+  fetch("http://127.0.0.1:5000/start_camera").catch(() => {});
+}
+
+function stopCamera() {
+  const img = document.getElementById("cameraStream");
+  const offline = document.getElementById("camOffline");
+  const scanLine = document.getElementById("scanLine");
+  const liveBadge = document.getElementById("liveBadge");
+  img.src = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEAAAAALAAAAAABAAEAAAI=";
+  img.style.display = "none";
+  cameraActive = false;
+  offline.className = "cam-offline show";
+  offline.innerHTML = '<div class="cam-offline-icon">📷</div><div class="cam-offline-text">Camera stopped — press ▶ Start</div>';
+  scanLine.style.display = "none";
+  liveBadge.className = "cam-badge stopped";
+  liveBadge.textContent = "● Stopped";
+  document.getElementById("detectionBadge").textContent = "—";
+  addLog("Camera stopped by user", "WARN", false);
+  stopAlarm();
+
+  fetch("http://127.0.0.1:5000/stop_camera").catch(() => {});
+}
+let userLat = null, userLng = null;
+let mapInitialized = false;
+let currentDest = "Indore";
+let selectedRouteKm = 0, selectedRouteMin = 0;
+
+const ROUTE_DB = {
+  "indore":    [
+    { name:"Via NH 46 (Bhopal–Indore Expressway)", detail:"196 km · ~2h 45m · 4-lane, low traffic",    km:196, mins:165, badge:"fast",   badgeTxt:"Fastest",  dot:"var(--green)" },
+    { name:"Via NH 12 through Sehore & Dewas",      detail:"210 km · ~3h 15m · Moderate traffic",       km:210, mins:195, badge:"toll",   badgeTxt:"Toll ₹155",dot:"var(--amber)" },
+    { name:"Via Obedullaganj & Hoshangabad Road",   detail:"228 km · ~3h 45m · Scenic, rest stops",     km:228, mins:225, badge:"scenic", badgeTxt:"Scenic",   dot:"var(--accent)"},
+  ],
+  "jabalpur":  [
+    { name:"Via NH 45 (Direct)",                    detail:"319 km · ~5h 30m · Expressway",             km:319, mins:330, badge:"fast",   badgeTxt:"Fastest",  dot:"var(--green)" },
+    { name:"Via Sagar & Damoh",                     detail:"345 km · ~6h 10m · State highway",          km:345, mins:370, badge:"scenic", badgeTxt:"Scenic",   dot:"var(--accent)"},
+  ],
+  "gwalior":   [
+    { name:"Via NH 46 & NH 44",                     detail:"404 km · ~6h 20m · National Highway",       km:404, mins:380, badge:"fast",   badgeTxt:"Fastest",  dot:"var(--green)" },
+    { name:"Via Shivpuri",                          detail:"430 km · ~7h 00m · Scenic plateau",         km:430, mins:420, badge:"scenic", badgeTxt:"Scenic",   dot:"var(--accent)"},
+  ],
+  "ujjain":    [
+    { name:"Via NH 52 (Direct)",                    detail:"183 km · ~3h 00m · 4-lane highway",         km:183, mins:180, badge:"fast",   badgeTxt:"Fastest",  dot:"var(--green)" },
+    { name:"Via Dewas",                             detail:"195 km · ~3h 20m · State road",             km:195, mins:200, badge:"toll",   badgeTxt:"Toll ₹80", dot:"var(--amber)" },
+  ],
+  "nagpur":    [
+    { name:"Via NH 44 (Direct)",                    detail:"356 km · ~5h 45m · National Highway",       km:356, mins:345, badge:"fast",   badgeTxt:"Fastest",  dot:"var(--green)" },
+    { name:"Via Chhindwara",                        detail:"385 km · ~6h 30m · Hilly, scenic",          km:385, mins:390, badge:"scenic", badgeTxt:"Scenic",   dot:"var(--accent)"},
+  ],
+  "delhi":     [
+    { name:"Via NH 44 Agra–Delhi Expressway",       detail:"695 km · ~9h 30m · Expressway, tolls",      km:695, mins:570, badge:"fast",   badgeTxt:"Fastest",  dot:"var(--green)" },
+    { name:"Via Jhansi & Agra",                     detail:"720 km · ~10h 15m · NH 44",                 km:720, mins:615, badge:"toll",   badgeTxt:"Toll ₹420",dot:"var(--amber)" },
+  ],
+  "mumbai":    [
+    { name:"Via NH 52 & NH 48",                     detail:"776 km · ~11h 30m · Expressway",            km:776, mins:690, badge:"fast",   badgeTxt:"Fastest",  dot:"var(--green)" },
+    { name:"Via Pune",                              detail:"810 km · ~12h 00m · Via Pune city",         km:810, mins:720, badge:"toll",   badgeTxt:"Toll ₹580",dot:"var(--amber)" },
+  ],
+};
+const CITY_COORDS = {
+  "agra":        [27.1767, 78.0081], "delhi":       [28.6139, 77.2090],
+  "mumbai":      [19.0760, 72.8777], "pune":        [18.5204, 73.8567],
+  "nagpur":      [21.1458, 79.0882], "hyderabad":   [17.3850, 78.4867],
+  "bangalore":   [12.9716, 77.5946], "chennai":     [13.0827, 80.2707],
+  "kolkata":     [22.5726, 88.3639], "jaipur":      [26.9124, 75.7873],
+  "lucknow":     [26.8467, 80.9462], "kanpur":      [26.4499, 80.3319],
+  "varanasi":    [25.3176, 82.9739], "patna":       [25.5941, 85.1376],
+  "surat":       [21.1702, 72.8311], "ahmedabad":   [23.0225, 72.5714],
+  "chandigarh":  [30.7333, 76.7794], "amritsar":    [31.6340, 74.8723],
+  "dehradun":    [30.3165, 78.0322], "shimla":      [31.1048, 77.1734],
+  "indore":      [22.7196, 75.8577], "bhopal":      [23.2599, 77.4126],
+  "jabalpur":    [23.1815, 79.9864], "gwalior":     [26.2183, 78.1828],
+  "ujjain":      [23.1765, 75.7885], "rewa":        [24.5362, 81.3037],
+  "satna":       [24.5854, 80.8322], "sagar":       [23.8388, 78.7378],
+  "raipur":      [21.2514, 81.6296], "bilaspur":    [22.0797, 82.1391],
+  "allahabad":   [25.4358, 81.8463], "mathura":     [27.4924, 77.6737],
+  "aligarh":     [27.8974, 78.0880], "meerut":      [28.9845, 77.7064],
+  "noida":       [28.5355, 77.3910], "gurgaon":     [28.4595, 77.0266],
+  "faridabad":   [28.4089, 77.3178], "jodhpur":     [26.2389, 73.0243],
+  "udaipur":     [24.5854, 73.7125], "kota":        [25.2138, 75.8648],
+  "ajmer":       [26.4499, 74.6399], "bikaner":     [28.0229, 73.3119],
+  "aurangabad":  [19.8762, 75.3433], "nashik":      [19.9975, 73.7898],
+  "kolhapur":    [16.7050, 74.2433], "solapur":     [17.6868, 75.9064],
+  "vizag":       [17.6868, 83.2185], "vijayawada":  [16.5062, 80.6480],
+  "coimbatore":  [11.0168, 76.9558], "madurai":     [9.9252,  78.1198],
+  "mysore":      [12.2958, 76.6394], "hubli":       [15.3647, 75.1240],
+  "mangalore":   [12.9141, 74.8560], "kochi":       [9.9312,  76.2673],
+  "trivandrum":  [8.5241,  76.9366], "kozhikode":   [11.2588, 75.7804],
+  "bhubaneswar": [20.2961, 85.8245], "cuttack":     [20.4625, 85.8830],
+  "guwahati":    [26.1445, 91.7362], "siliguri":    [26.7271, 88.3953],
+};
+
+// Haversine formula — straight-line distance in km between two lat/lng points
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng/2) * Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function estimateRoutes(dest, originLat, originLng) {
+  const key     = dest.trim().toLowerCase();
+  const destPos = CITY_COORDS[key];
+  const oLat = originLat || 23.2599;
+  const oLng = originLng || 77.4126;
+
+  let straightKm = 0;
+  if (destPos) {
+    straightKm = haversineKm(oLat, oLng, destPos[0], destPos[1]);
+  }
+
+  const fastKm   = straightKm > 0 ? Math.round(straightKm * 1.28) : 0;
+  const altKm    = straightKm > 0 ? Math.round(straightKm * 1.42) : 0;
+
+  // Avg speed: 65 km/h on highways, 55 km/h on state roads
+  const fastMins = fastKm > 0 ? Math.round((fastKm / 65) * 60) : 0;
+  const altMins  = altKm  > 0 ? Math.round((altKm  / 55) * 60) : 0;
+
+  const fastDetail = fastKm > 0
+    ? `~${fastKm} km · ~${Math.floor(fastMins/60)}h ${fastMins%60}m · Via NH (estimated)`
+    : "Open Google Maps for exact distance";
+  const altDetail = altKm > 0
+    ? `~${altKm} km · ~${Math.floor(altMins/60)}h ${altMins%60}m · Alternate route (estimated)`
+    : "Via state highways";
+
+  return [
+    { name:`Fastest route to ${dest}`,   detail: fastDetail, km: fastKm, mins: fastMins, badge:"fast",   badgeTxt:"Fastest", dot:"var(--green)"  },
+    { name:`Alternate route to ${dest}`, detail: altDetail,  km: altKm,  mins: altMins,  badge:"scenic", badgeTxt:"Alt",     dot:"var(--accent)" },
+  ];
+}
+
+function renderRoutes(dest) {
+  const key    = dest.trim().toLowerCase();
+  const routes = ROUTE_DB[key] || estimateRoutes(dest, userLat, userLng);
+  const list   = document.getElementById("routeList");
+  if (!list) return;
+
+  const isEstimated = !ROUTE_DB[key];
+
+  list.innerHTML = routes.map((r, i) => `
+    <div class="route-item ${i===0?'selected':''}" onclick="selectRouteData(this,${r.km},${r.mins})">
+      <div class="route-dot" style="background:${r.dot};"></div>
+      <div class="route-info">
+        <div class="route-name">${r.name}</div>
+        <div class="route-detail">${r.detail}</div>
+      </div>
+      <div class="route-badge ${r.badge}">${r.badgeTxt}</div>
+    </div>`).join("")
+    + (isEstimated && routes[0].km > 0
+        ? `<div style="font-size:10px;color:var(--text3);font-family:var(--mono);padding:4px 2px;">
+             ⚠ Estimated via straight-line × 1.28 — check Google Maps for exact distance
+           </div>`
+        : "");
+
+  // Auto-select first route
+  selectedRouteKm  = routes[0].km;
+  selectedRouteMin = routes[0].mins;
+  updateTripStats();
+}
+
+function setLocStatus(ok, text) {
+  document.getElementById("locDot").style.background = ok ? "var(--green)" : "var(--amber)";
+  document.getElementById("locText").textContent = text;
+}
+
+function onDestInput(el) {
+  document.getElementById("searchClear").style.display = el.value ? "block" : "none";
+}
+function clearSearch() {
+  const inp = document.getElementById("destInput");
+  inp.value = "";
+  document.getElementById("searchClear").style.display = "none";
+  inp.focus();
+  document.querySelectorAll(".dest-chip").forEach(c => c.classList.remove("active"));
+}
+function pickChip(el, dest) {
+  document.querySelectorAll(".dest-chip").forEach(c => c.classList.remove("active"));
+  el.classList.add("active");
+  document.getElementById("destInput").value = dest;
+  document.getElementById("searchClear").style.display = "block";
+  doSearch();
+}
+function selectRouteData(el, km, mins) {
+  document.querySelectorAll('.route-item').forEach(r => r.classList.remove('selected'));
+  el.classList.add('selected');
+  if (km > 0) {
+    selectedRouteKm  = km;
+    selectedRouteMin = mins;
+    updateTripStats();
+  }
+}
+
+function updateTripStats() {
+  if (selectedRouteKm > 0) {
+    const now = new Date();
+    const arr = new Date(now.getTime() + selectedRouteMin * 60000);
+    const hrs = Math.floor(selectedRouteMin / 60);
+    const min = selectedRouteMin % 60;
+    document.getElementById("tripDist").textContent     = selectedRouteKm + " km";
+    document.getElementById("tripDuration").textContent = hrs + "h " + min + "m";
+    document.getElementById("tripETA").textContent      = arr.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+  } else {
+    document.getElementById("tripDist").textContent     = "—";
+    document.getElementById("tripDuration").textContent = "—";
+    document.getElementById("tripETA").textContent      = "—";
+  }
+}
+const NEARBY_CATS = [
+  { icon:"⛽", name:"Fuel",     query:"petrol pump"         },
+  { icon:"🍽️", name:"Food",     query:"dhaba restaurant"    },
+  { icon:"🏨", name:"Hotel",    query:"hotel"               },
+  { icon:"🏥", name:"Hospital", query:"hospital"            },
+  { icon:"🅿️", name:"Parking",  query:"parking"             },
+  { icon:"☕", name:"Cafe",     query:"cafe coffee"         },
+];
+function searchNearby(type, lat, lng) {
+  const iframe  = document.getElementById("googleMapFrame");
+  const overlay = document.getElementById("mapLoadingOverlay");
+  overlay.style.display = "flex";
+  overlay.classList.remove("hidden");
+
+  let src;
+  if (lat && lng) {
+    const q = encodeURIComponent(type);
+    src = `https://maps.google.com/maps?q=${q}&ll=${lat},${lng}&z=14&dirflg=d&output=embed&hl=en`;
+  } else {
+    const q = encodeURIComponent(type + " near me");
+    src = `https://maps.google.com/maps?q=${q}&output=embed&hl=en`;
+  }
+
+  iframe.src = src;
+  iframe.onload = () => {
+    overlay.classList.add("hidden");
+    setTimeout(() => { overlay.style.display = "none"; }, 450);
+  };
+  showToast("Showing " + type + " near your location…", "ok");
+}
+function loadNearbyStops(forceRefresh) {
+  const container = document.getElementById("restStops");
+  if (!container) return;
+
+  container.innerHTML = `<div style="font-size:11px;color:var(--text3);font-family:var(--mono);padding:8px 0;">📍 Getting your location…</div>`;
+
+  if (!navigator.geolocation) {
+    renderRestCards(null, null);
+    return;
+  }
+  if (!forceRefresh && userLat && userLng) {
+    renderRestCards(userLat, userLng);
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      // Update location display
+      setLocStatus(true, `${userLat.toFixed(4)}, ${userLng.toFixed(4)}`);
+      if (!_cachedLocStr) {
+        _cachedLocStr  = `${Math.abs(userLat).toFixed(4)}° ${userLat>=0?'N':'S'}, ${Math.abs(userLng).toFixed(4)}° ${userLng>=0?'E':'W'}`;
+        _cachedLocLink = `https://maps.google.com/?q=${userLat},${userLng}`;
+      }
+      renderRestCards(userLat, userLng);
+    },
+    () => {
+      renderRestCards(null, null);
+      showToast("Location denied — showing generic search", "warning");
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+function renderRestCards(lat, lng) {
+  const container = document.getElementById("restStops");
+  if (!container) return;
+
+  const locLabel = lat && lng
+    ? `${Math.abs(lat).toFixed(3)}°${lat>=0?'N':'S'}, ${Math.abs(lng).toFixed(3)}°${lng>=0?'E':'W'}`
+    : "Location unavailable";
+
+  container.innerHTML = NEARBY_CATS.map(cat => `
+    <div class="rest-card" onclick="searchNearby('${cat.query}', ${lat||'null'}, ${lng||'null'})">
+      <div class="rest-card-icon">${cat.icon}</div>
+      <div class="rest-card-name">${cat.name}</div>
+      <div class="rest-card-dist">${lat ? '📍 Near you' : 'No GPS'}</div>
+    </div>`).join("");
+  const locRow = document.createElement("div");
+  locRow.style.cssText = "font-size:10px;color:var(--text3);font-family:var(--mono);padding:5px 2px 0;flex-basis:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
+  locRow.textContent = "📍 " + locLabel;
+  container.appendChild(locRow);
+}
+function updateMapDrowsyWarn(level) {
+  const warn = document.getElementById("mapDrowsyWarn");
+  if (!warn) return;
+  if (level === "warn") {
+    warn.textContent = "⚠️ Eyes closing — find a rest stop!";
+    warn.className   = "map-drowsy-warn show";
+  } else if (level === "danger") {
+    warn.textContent = "🚨 Pull over immediately!";
+    warn.className   = "map-drowsy-warn show";
+  } else {
+    warn.className   = "map-drowsy-warn";
+  }
+}
+
+function loadMap(lat, lng, destination) {
+  currentDest = destination;
+  const dest  = encodeURIComponent(destination + ", India");
+  const src   = lat && lng
+    ? `https://maps.google.com/maps?saddr=${lat},${lng}&daddr=${dest}&dirflg=d&output=embed&hl=en`
+    : `https://maps.google.com/maps?saddr=Bhopal,+Madhya+Pradesh,+India&daddr=${dest}&dirflg=d&output=embed&hl=en`;
+
+  const iframe  = document.getElementById("googleMapFrame");
+  const overlay = document.getElementById("mapLoadingOverlay");
+  overlay.style.display = "flex";
+  overlay.classList.remove("hidden");
+  iframe.onload = () => {
+    overlay.classList.add("hidden");
+    setTimeout(() => { overlay.style.display = "none"; }, 450);
+  };
+  iframe.onerror = () => {
+    overlay.innerHTML = '<div style="font-size:28px">⚠️</div><p style="color:var(--amber)">Map failed to load</p>';
+  };
+  iframe.src = src;
+
+  // Update route label
+  const label = document.getElementById("routeLabel");
+  if (label) label.textContent = `Suggested Routes → ${destination}`;
+
+  // Sync active chip
+  document.querySelectorAll(".dest-chip").forEach(c => {
+    c.classList.toggle("active", c.textContent.trim().toLowerCase() === destination.toLowerCase());
+  });
+  renderRoutes(destination);
+}
+
+function initMap() {
+  if (mapInitialized) return;
+  mapInitialized = true;
+  const destination = document.getElementById("destInput").value.trim() || "Indore";
+  if (!navigator.geolocation) {
+    setLocStatus(false, "Geolocation not supported — using Bhopal");
+    loadMap(null, null, destination);
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      setLocStatus(true, `${userLat.toFixed(4)}, ${userLng.toFixed(4)}`);
+      loadMap(userLat, userLng, destination);
+    },
+    () => {
+      setLocStatus(false, "Location denied — using Bhopal");
+      loadMap(null, null, destination);
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+function doSearch() {
+  const destination = document.getElementById("destInput").value.trim();
+  if (!destination) { showToast("Please enter a destination", "warning"); return; }
+  mapInitialized = false;
+  if (userLat && userLng) {
+    loadMap(userLat, userLng, destination);
+    mapInitialized = true;
+  } else {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        userLat = pos.coords.latitude; userLng = pos.coords.longitude;
+        setLocStatus(true, `${userLat.toFixed(4)}, ${userLng.toFixed(4)}`);
+        loadMap(userLat, userLng, destination);
+        mapInitialized = true;
+      },
+      () => {
+        setLocStatus(false, "Location denied — using Bhopal");
+        loadMap(null, null, destination);
+        mapInitialized = true;
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }
+}
+
+setDrowsyLevel("safe");
+renderRoutes("Indore");   // render default routes on first load
+
+document.getElementById('btab-map').addEventListener('click', () => {
+  if (!mapInitialized) initMap();
+  loadNearbyStops(false);   // load rest stops using current GPS on every tab open
+});
+</script>
+</body>
+</html>

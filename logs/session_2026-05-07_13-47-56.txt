@@ -1,0 +1,5 @@
+Driver Drowsiness Detection - Session Log
+Session started: 07 May 2026, 01:47:56 PM
+============================================================
+
+[01:47:56 PM]  [OK    ]  Camera started — monitoring session began

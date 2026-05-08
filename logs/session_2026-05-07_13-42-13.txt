@@ -1,0 +1,11 @@
+Driver Drowsiness Detection - Session Log
+Session started: 07 May 2026, 01:42:13 PM
+============================================================
+
+[01:42:13 PM]  [OK    ]  Camera started — monitoring session began
+[01:42:29 PM]  [WARN  ]  WARNING — driver getting drowsy, take a break
+[01:42:30 PM]  [DANGER]  CRITICAL — eyes closed too long, pull over immediately
+[01:42:33 PM]  [OK    ]  Driver alert — eyes open, normal state
+[01:42:40 PM]  [WARN  ]  WARNING — driver getting drowsy, take a break
+[01:42:42 PM]  [DANGER]  CRITICAL — eyes closed too long, pull over immediately
+[01:42:47 PM]  [OK    ]  Driver alert — eyes open, normal state
